@@ -13,6 +13,7 @@ namespace MiaFantasyRun.Editor
         private const string MiaRunnerSpritePath = "Assets/_MiaFantasyRun/Art/Characters/mia-modern-front.png";
         private const string MiaBackSpritePath = "Assets/_MiaFantasyRun/Art/Characters/mia-modern-back.png";
         private const string MiaRunSheetPath = "Assets/_MiaFantasyRun/Art/Characters/mia-run-cycle.png";
+        private const string MagicShieldSpritePath = "Assets/_MiaFantasyRun/Art/Pickups/magic-shield.png";
 
         [MenuItem("Mia Fantasy Run/Create Starter Scene")]
         public static void CreateStarterScene()
@@ -184,6 +185,7 @@ namespace MiaFantasyRun.Editor
             CharacterDataGenerator.Generate();
             EnsureSpriteAsset(MiaBackSpritePath, 480f);
             EnsureRuntimeTextureAsset(MiaRunSheetPath);
+            EnsureSpriteAsset(MagicShieldSpritePath, 560f);
             CreateStarterScene();
             CreateMainMenuScene();
             CreateSplashScene();
@@ -323,6 +325,11 @@ namespace MiaFantasyRun.Editor
 
             var playerController = player.AddComponent<Gameplay.PlayerController>();
             var powerUpController = player.AddComponent<Gameplay.PowerUpController>();
+            var shieldBubble = player.AddComponent<Gameplay.ShieldBubbleVisual>();
+            player.AddComponent<Gameplay.RunnerDustTrail>();
+            var serializedShieldBubble = new SerializedObject(shieldBubble);
+            serializedShieldBubble.FindProperty("shieldIconSprite").objectReferenceValue = EnsureSpriteAsset(MagicShieldSpritePath, 560f);
+            serializedShieldBubble.ApplyModifiedPropertiesWithoutUndo();
             var serializedPlayer = new SerializedObject(playerController);
             serializedPlayer.FindProperty("input").objectReferenceValue = swipeInput;
             serializedPlayer.ApplyModifiedPropertiesWithoutUndo();
@@ -365,6 +372,7 @@ namespace MiaFantasyRun.Editor
             serializedSpawner.FindProperty("obstacleMaterial").objectReferenceValue = CreateMaterial("Prototype Obstacle Material", new Color(0.65f, 0.25f, 0.9f));
             serializedSpawner.FindProperty("decorationMaterial").objectReferenceValue = CreateMaterial("Prototype Crystal Decoration Material", new Color(0.6f, 0.25f, 0.95f));
             serializedSpawner.FindProperty("laneMaterial").objectReferenceValue = CreateMaterial("Prototype Lane Material", new Color(0.92f, 0.98f, 1f));
+            serializedSpawner.FindProperty("shieldPickupSprite").objectReferenceValue = EnsureSpriteAsset(MagicShieldSpritePath, 560f);
             serializedSpawner.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -499,7 +507,7 @@ namespace MiaFantasyRun.Editor
             var coins = CreateHudText(canvasObject.transform, "Coins", new Vector2(58f, -128f), TextAnchor.UpperLeft);
             var gems = CreateHudText(canvasObject.transform, "Gems", new Vector2(58f, -200f), TextAnchor.UpperLeft);
             var distance = CreateHudText(canvasObject.transform, "Distance", new Vector2(-58f, -49f), TextAnchor.UpperRight);
-            var status = CreateHudText(canvasObject.transform, "Status", new Vector2(0f, 140f), TextAnchor.LowerCenter);
+            var status = CreateHudText(canvasObject.transform, "Status", new Vector2(0f, 104f), TextAnchor.LowerCenter);
 
             CreateMobileTouchControls(canvasObject.transform, swipeInput);
 
@@ -521,7 +529,7 @@ namespace MiaFantasyRun.Editor
             textObject.transform.SetParent(parent, false);
             var text = textObject.AddComponent<UnityEngine.UI.Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = name == "Status" ? 44 : 30;
+            text.fontSize = name == "Status" ? 28 : 30;
             text.fontStyle = FontStyle.Bold;
             text.color = Color.white;
             text.alignment = alignment;
@@ -543,7 +551,7 @@ namespace MiaFantasyRun.Editor
                 _ => new Vector2(0f, 1f)
             };
             rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = name == "Status" ? new Vector2(520f, 72f) : new Vector2(300f, 40f);
+            rect.sizeDelta = name == "Status" ? new Vector2(360f, 46f) : new Vector2(300f, 40f);
             return text;
         }
 

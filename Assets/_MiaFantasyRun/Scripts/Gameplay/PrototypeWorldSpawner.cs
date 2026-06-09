@@ -16,6 +16,7 @@ namespace MiaFantasyRun.Gameplay
         [SerializeField] private Material obstacleMaterial;
         [SerializeField] private Material decorationMaterial;
         [SerializeField] private Material laneMaterial;
+        [SerializeField] private Sprite shieldPickupSprite;
 
         private readonly List<GameObject> spawned = new();
         private readonly Dictionary<string, Material> materialCache = new();
@@ -137,6 +138,7 @@ namespace MiaFantasyRun.Gameplay
             road.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Road Material", theme.Road);
 
             CreateLaneMarkers(root.transform);
+            CreateRoadDetails(root.transform, theme);
             CreateSidewalks(root.transform, theme);
             CreateDecorations(root.transform, theme);
             CreateCityScenery(root.transform, theme);
@@ -190,6 +192,33 @@ namespace MiaFantasyRun.Gameplay
             }
         }
 
+        private void CreateRoadDetails(Transform root, CountryTheme theme)
+        {
+            var crackMaterial = GetMaterial($"{theme.Name} Road Crack", Color.Lerp(theme.Road, Color.black, 0.45f));
+            for (var i = 0; i < 3; i++)
+            {
+                var crack = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                crack.name = "Road Crack Decal";
+                crack.transform.SetParent(root);
+                crack.transform.localPosition = new Vector3(Random.Range(-2.7f, 2.7f), -0.425f, 3.5f + i * 4.8f);
+                crack.transform.localRotation = Quaternion.Euler(0f, Random.Range(-18f, 18f), 0f);
+                crack.transform.localScale = new Vector3(Random.Range(0.55f, 1.25f), 0.025f, 0.045f);
+                crack.GetComponent<Renderer>().sharedMaterial = crackMaterial;
+                Destroy(crack.GetComponent<Collider>());
+            }
+
+            for (var i = 0; i < 2; i++)
+            {
+                var reflection = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                reflection.name = "Soft Road Reflection";
+                reflection.transform.SetParent(root);
+                reflection.transform.localPosition = new Vector3(Random.Range(-2f, 2f), -0.415f, 4f + i * 7f);
+                reflection.transform.localScale = new Vector3(1.2f, 0.018f, 0.08f);
+                reflection.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Road Reflection", new Color(1f, 1f, 1f, 0.18f));
+                Destroy(reflection.GetComponent<Collider>());
+            }
+        }
+
         private void CreateSidewalks(Transform root, CountryTheme theme)
         {
             for (var side = -1; side <= 1; side += 2)
@@ -207,6 +236,80 @@ namespace MiaFantasyRun.Gameplay
                 verge.transform.localPosition = new Vector3(side * 8.1f, -0.62f, segmentLength * 0.5f);
                 verge.transform.localScale = new Vector3(2.5f, 0.12f, segmentLength);
                 verge.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Verge", Color.Lerp(theme.Accent, Color.black, 0.12f));
+
+                CreateCurb(root, side, theme);
+                CreateStreetLamp(root, side, theme, 3.6f);
+                CreateFence(root, side, theme, 9f);
+                CreateBenchOrBush(root, side, theme, 13.2f);
+            }
+        }
+
+        private void CreateCurb(Transform root, int side, CountryTheme theme)
+        {
+            var curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            curb.name = side < 0 ? "Left Painted Curb" : "Right Painted Curb";
+            curb.transform.SetParent(root);
+            curb.transform.localPosition = new Vector3(side * 4.72f, -0.32f, segmentLength * 0.5f);
+            curb.transform.localScale = new Vector3(0.18f, 0.18f, segmentLength);
+            curb.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Curb", Color.Lerp(Color.white, theme.Accent, 0.35f));
+        }
+
+        private void CreateStreetLamp(Transform root, int side, CountryTheme theme, float z)
+        {
+            if (segmentIndex % 2 != 0)
+            {
+                return;
+            }
+
+            var lamp = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            lamp.name = "Street Lamp";
+            lamp.transform.SetParent(root);
+            lamp.transform.localPosition = new Vector3(side * 6.15f, 1.25f, z);
+            lamp.transform.localScale = new Vector3(0.08f, 2.2f, 0.08f);
+            lamp.GetComponent<Renderer>().sharedMaterial = laneMaterial;
+
+            var lightCap = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            lightCap.name = "Lamp Glow";
+            lightCap.transform.SetParent(root);
+            lightCap.transform.localPosition = new Vector3(side * 6.15f, 2.48f, z);
+            lightCap.transform.localScale = Vector3.one * 0.28f;
+            lightCap.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Lamp Glow", new Color(1f, 0.88f, 0.45f));
+            var light = lightCap.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.range = 3.3f;
+            light.intensity = 0.55f;
+            light.color = new Color(1f, 0.86f, 0.55f);
+        }
+
+        private void CreateFence(Transform root, int side, CountryTheme theme, float z)
+        {
+            var rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rail.name = "Decorative Fence";
+            rail.transform.SetParent(root);
+            rail.transform.localPosition = new Vector3(side * 7f, 0.55f, z);
+            rail.transform.localScale = new Vector3(0.12f, 0.55f, 2.8f);
+            rail.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Fence", theme.BuildingB);
+        }
+
+        private void CreateBenchOrBush(Transform root, int side, CountryTheme theme, float z)
+        {
+            if (segmentIndex % 3 == 0)
+            {
+                var bench = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                bench.name = "Roadside Bench";
+                bench.transform.SetParent(root);
+                bench.transform.localPosition = new Vector3(side * 6.45f, 0.32f, z);
+                bench.transform.localScale = new Vector3(0.18f, 0.22f, 1.15f);
+                bench.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Bench", theme.BuildingA);
+            }
+            else
+            {
+                var bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                bush.name = "Rounded Bush";
+                bush.transform.SetParent(root);
+                bush.transform.localPosition = new Vector3(side * 6.55f, 0.2f, z);
+                bush.transform.localScale = new Vector3(0.72f, 0.38f, 0.72f);
+                bush.GetComponent<Renderer>().sharedMaterial = GetMaterial($"{theme.Name} Bush", Color.Lerp(theme.Accent, Color.green, 0.35f));
             }
         }
 
@@ -251,19 +354,14 @@ namespace MiaFantasyRun.Gameplay
             coin.AddComponent<CollectableSpinner>();
             coin.AddComponent<Collectable>();
 
-            var star = new GameObject("Embossed Star");
-            star.transform.SetParent(coin.transform, false);
-            star.transform.localPosition = new Vector3(0f, 0.53f, 0f);
-            star.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            star.transform.localScale = new Vector3(0.42f, 0.42f, 0.42f);
-            star.AddComponent<MeshFilter>().sharedMesh = CreateStarMesh();
-            star.AddComponent<MeshRenderer>().sharedMaterial = CreateRuntimeMaterial("Coin Star Highlight Runtime", new Color(1f, 0.94f, 0.35f));
+            CreateCoinMLogo(coin.transform);
 
             var glow = coin.AddComponent<Light>();
             glow.type = LightType.Point;
             glow.color = new Color(1f, 0.78f, 0.18f);
             glow.range = 2.2f;
             glow.intensity = 0.45f;
+            CreateSparkleParticles(coin.transform, new Color(1f, 0.86f, 0.22f));
         }
 
         private void CreateGem(Transform root, int lane, float z)
@@ -290,24 +388,65 @@ namespace MiaFantasyRun.Gameplay
             shield.name = "Shield Power-Up";
             shield.transform.SetParent(root);
             shield.transform.localPosition = new Vector3(lane * 2.5f, 1.2f, z);
-            shield.transform.localScale = Vector3.one * 0.88f;
-            shield.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            var meshFilter = shield.AddComponent<MeshFilter>();
-            meshFilter.sharedMesh = CreateShieldMesh();
-            shield.AddComponent<MeshRenderer>().sharedMaterial = shieldMaterial;
+            shield.transform.localScale = Vector3.one * 1.18f;
+
+            if (shieldPickupSprite != null)
+            {
+                var renderer = shield.AddComponent<SpriteRenderer>();
+                renderer.sprite = shieldPickupSprite;
+                renderer.sortingOrder = 12;
+                renderer.sharedMaterial = new Material(Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Transparent"))
+                {
+                    name = "Magic Shield Sprite Material"
+                };
+            }
+            else
+            {
+                shield.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                var meshFilter = shield.AddComponent<MeshFilter>();
+                meshFilter.sharedMesh = CreateShieldMesh();
+                shield.AddComponent<MeshRenderer>().sharedMaterial = shieldMaterial;
+            }
+
             var collider = shield.AddComponent<SphereCollider>();
-            collider.radius = 0.72f;
+            collider.radius = 0.88f;
             collider.isTrigger = true;
             shield.AddComponent<CollectableSpinner>();
             shield.AddComponent<Collectable>().Configure(CollectableType.Key, 1);
+            CreateSparkleParticles(shield.transform, new Color(0.25f, 0.85f, 1f));
 
-            var crest = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            crest.name = "Shield Crest";
-            crest.transform.SetParent(shield.transform, false);
-            crest.transform.localPosition = new Vector3(0f, 0.1f, -0.035f);
-            crest.transform.localScale = new Vector3(0.16f, 0.7f, 0.04f);
-            crest.GetComponent<Renderer>().sharedMaterial = laneMaterial;
-            Destroy(crest.GetComponent<Collider>());
+            var aura = shield.AddComponent<Light>();
+            aura.type = LightType.Point;
+            aura.color = new Color(0.18f, 0.78f, 1f);
+            aura.range = 2.7f;
+            aura.intensity = 0.7f;
+
+            if (shieldPickupSprite == null)
+            {
+                var crest = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                crest.name = "Shield Crest";
+                crest.transform.SetParent(shield.transform, false);
+                crest.transform.localPosition = new Vector3(0f, 0.1f, -0.035f);
+                crest.transform.localScale = new Vector3(0.16f, 0.7f, 0.04f);
+                crest.GetComponent<Renderer>().sharedMaterial = laneMaterial;
+                Destroy(crest.GetComponent<Collider>());
+            }
+        }
+
+        private void CreateCoinMLogo(Transform coin)
+        {
+            var logoMaterial = CreateRuntimeMaterial("Coin M Logo Runtime", new Color(1f, 0.96f, 0.36f));
+            for (var i = 0; i < 4; i++)
+            {
+                var stroke = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stroke.name = "Embossed M Logo";
+                stroke.transform.SetParent(coin, false);
+                stroke.transform.localPosition = new Vector3(-0.18f + i * 0.12f, 0.54f, i is 1 or 2 ? 0.04f : 0f);
+                stroke.transform.localRotation = Quaternion.Euler(90f, 0f, i is 1 ? -28f : i is 2 ? 28f : 0f);
+                stroke.transform.localScale = new Vector3(0.05f, 0.22f, 0.035f);
+                stroke.GetComponent<Renderer>().sharedMaterial = logoMaterial;
+                Destroy(stroke.GetComponent<Collider>());
+            }
         }
 
         private void CreateObstacle(Transform root, CountryTheme theme)
