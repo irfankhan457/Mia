@@ -28,9 +28,9 @@ namespace MiaFantasyRun.UI
             }
 
             var state = manager.State;
-            scoreText.text = $"Score: {state.Score:N0}";
-            coinsText.text = $"Coins: {state.Coins:N0}";
-            gemsText.text = $"Gems: {state.Gems:N0}";
+            scoreText.text = $"{state.Score:N0}\nSCORE";
+            coinsText.text = $"{state.Coins:N0}";
+            gemsText.text = $"{state.Gems:N0}";
             distanceText.text = $"{state.DistanceMeters:N0} m";
 
             if (manager.IsGameOver)

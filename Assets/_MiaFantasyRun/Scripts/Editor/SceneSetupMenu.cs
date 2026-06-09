@@ -14,6 +14,8 @@ namespace MiaFantasyRun.Editor
         private const string MiaBackSpritePath = "Assets/_MiaFantasyRun/Art/Characters/mia-modern-back.png";
         private const string MiaRunSheetPath = "Assets/_MiaFantasyRun/Art/Characters/mia-run-cycle.png";
         private const string MagicShieldSpritePath = "Assets/_MiaFantasyRun/Art/Pickups/magic-shield.png";
+        private const string CoinUiSpritePath = "Assets/_MiaFantasyRun/Art/UI/coin-ui.png";
+        private const string GemUiSpritePath = "Assets/_MiaFantasyRun/Art/UI/gem-ui.png";
 
         [MenuItem("Mia Fantasy Run/Create Starter Scene")]
         public static void CreateStarterScene()
@@ -186,6 +188,8 @@ namespace MiaFantasyRun.Editor
             EnsureSpriteAsset(MiaBackSpritePath, 480f);
             EnsureRuntimeTextureAsset(MiaRunSheetPath);
             EnsureSpriteAsset(MagicShieldSpritePath, 560f);
+            EnsureSpriteAsset(CoinUiSpritePath, 128f);
+            EnsureSpriteAsset(GemUiSpritePath, 128f);
             CreateStarterScene();
             CreateMainMenuScene();
             CreateSplashScene();
@@ -498,18 +502,20 @@ namespace MiaFantasyRun.Editor
             scaler.referenceResolution = new Vector2(1080f, 1920f);
             canvasObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
-            CreateHudFrame(canvasObject.transform, "Score Pill", new Vector2(32f, -32f), new Vector2(300f, 70f), TextAnchor.UpperLeft, new Color(0.03f, 0.16f, 0.23f, 0.78f));
-            CreateHudFrame(canvasObject.transform, "Coins Pill", new Vector2(32f, -112f), new Vector2(235f, 64f), TextAnchor.UpperLeft, new Color(0.13f, 0.1f, 0.03f, 0.78f));
-            CreateHudFrame(canvasObject.transform, "Gems Pill", new Vector2(32f, -184f), new Vector2(210f, 64f), TextAnchor.UpperLeft, new Color(0.02f, 0.12f, 0.18f, 0.78f));
-            CreateHudFrame(canvasObject.transform, "Distance Pill", new Vector2(-32f, -32f), new Vector2(235f, 70f), TextAnchor.UpperRight, new Color(0.03f, 0.16f, 0.23f, 0.78f));
+            CreateHudFrame(canvasObject.transform, "Currency Glass", new Vector2(28f, -28f), new Vector2(186f, 112f), TextAnchor.UpperLeft, new Color(1f, 1f, 1f, 0.12f));
+            CreateHudFrame(canvasObject.transform, "Score Glass", new Vector2(0f, -24f), new Vector2(240f, 104f), TextAnchor.UpperCenter, new Color(1f, 1f, 1f, 0.12f));
+            CreateHudFrame(canvasObject.transform, "Distance Glass", new Vector2(-28f, -28f), new Vector2(154f, 62f), TextAnchor.UpperRight, new Color(1f, 1f, 1f, 0.12f));
 
-            var score = CreateHudText(canvasObject.transform, "Score", new Vector2(58f, -48f), TextAnchor.UpperLeft);
-            var coins = CreateHudText(canvasObject.transform, "Coins", new Vector2(58f, -128f), TextAnchor.UpperLeft);
-            var gems = CreateHudText(canvasObject.transform, "Gems", new Vector2(58f, -200f), TextAnchor.UpperLeft);
-            var distance = CreateHudText(canvasObject.transform, "Distance", new Vector2(-58f, -49f), TextAnchor.UpperRight);
+            var coinRow = CreateCurrencyRow(canvasObject.transform, "Coin Row", new Vector2(48f, -57f));
+            var gemRow = CreateCurrencyRow(canvasObject.transform, "Gem Row", new Vector2(48f, -103f));
+            CreateCoinIcon(coinRow.transform, new Vector2(0f, 0f), EnsureSpriteAsset(CoinUiSpritePath, 128f));
+            CreateGemIcon(gemRow.transform, new Vector2(0f, 0f), EnsureSpriteAsset(GemUiSpritePath, 128f));
+
+            var score = CreateHudText(canvasObject.transform, "Score", new Vector2(0f, -36f), TextAnchor.UpperCenter);
+            var coins = CreateHudText(coinRow.transform, "Coins", new Vector2(42f, 0f), TextAnchor.MiddleLeft);
+            var gems = CreateHudText(gemRow.transform, "Gems", new Vector2(42f, 0f), TextAnchor.MiddleLeft);
+            var distance = CreateHudText(canvasObject.transform, "Distance", new Vector2(-52f, -43f), TextAnchor.UpperRight);
             var status = CreateHudText(canvasObject.transform, "Status", new Vector2(0f, 104f), TextAnchor.LowerCenter);
-
-            CreateMobileTouchControls(canvasObject.transform, swipeInput);
 
             var hud = canvasObject.AddComponent<UI.PrototypeHud>();
             var serializedHud = new SerializedObject(hud);
@@ -529,7 +535,13 @@ namespace MiaFantasyRun.Editor
             textObject.transform.SetParent(parent, false);
             var text = textObject.AddComponent<UnityEngine.UI.Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = name == "Status" ? 28 : 30;
+            text.fontSize = name switch
+            {
+                "Status" => 28,
+                "Score" => 32,
+                "Distance" => 28,
+                _ => 32
+            };
             text.fontStyle = FontStyle.Bold;
             text.color = Color.white;
             text.alignment = alignment;
@@ -539,20 +551,43 @@ namespace MiaFantasyRun.Editor
             var rect = text.rectTransform;
             rect.anchorMin = alignment switch
             {
+                TextAnchor.UpperCenter => new Vector2(0.5f, 1f),
                 TextAnchor.UpperRight => new Vector2(1f, 1f),
                 TextAnchor.LowerCenter => new Vector2(0.5f, 0f),
+                TextAnchor.MiddleLeft => new Vector2(0f, 0.5f),
                 _ => new Vector2(0f, 1f)
             };
             rect.anchorMax = rect.anchorMin;
             rect.pivot = alignment switch
             {
+                TextAnchor.UpperCenter => new Vector2(0.5f, 1f),
                 TextAnchor.UpperRight => new Vector2(1f, 1f),
                 TextAnchor.LowerCenter => new Vector2(0.5f, 0f),
+                TextAnchor.MiddleLeft => new Vector2(0f, 0.5f),
                 _ => new Vector2(0f, 1f)
             };
             rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = name == "Status" ? new Vector2(360f, 46f) : new Vector2(300f, 40f);
+            rect.sizeDelta = name switch
+            {
+                "Status" => new Vector2(360f, 46f),
+                "Score" => new Vector2(210f, 76f),
+                "Distance" => new Vector2(130f, 42f),
+                _ => new Vector2(98f, 40f)
+            };
             return text;
+        }
+
+        private static RectTransform CreateCurrencyRow(Transform parent, string name, Vector2 anchoredPosition)
+        {
+            var row = new GameObject(name);
+            row.transform.SetParent(parent, false);
+            var rect = row.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = rect.anchorMin;
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = new Vector2(132f, 40f);
+            return rect;
         }
 
         private static void CreateHudFrame(Transform parent, string name, Vector2 anchoredPosition, Vector2 size, TextAnchor alignment, Color color)
@@ -561,6 +596,7 @@ namespace MiaFantasyRun.Editor
             var rect = frame.rectTransform;
             rect.anchorMin = alignment switch
             {
+                TextAnchor.UpperCenter => new Vector2(0.5f, 1f),
                 TextAnchor.UpperRight => new Vector2(1f, 1f),
                 TextAnchor.LowerCenter => new Vector2(0.5f, 0f),
                 _ => new Vector2(0f, 1f)
@@ -568,6 +604,7 @@ namespace MiaFantasyRun.Editor
             rect.anchorMax = rect.anchorMin;
             rect.pivot = alignment switch
             {
+                TextAnchor.UpperCenter => new Vector2(0.5f, 1f),
                 TextAnchor.UpperRight => new Vector2(1f, 1f),
                 TextAnchor.LowerCenter => new Vector2(0.5f, 0f),
                 _ => new Vector2(0f, 1f)
@@ -581,6 +618,66 @@ namespace MiaFantasyRun.Editor
             var shadow = frame.gameObject.AddComponent<UnityEngine.UI.Shadow>();
             shadow.effectColor = new Color(0f, 0f, 0f, 0.28f);
             shadow.effectDistance = new Vector2(0f, -5f);
+        }
+
+        private static void CreateCoinIcon(Transform parent, Vector2 anchoredPosition, Sprite coinSprite)
+        {
+            var icon = new GameObject("Coin Icon");
+            icon.transform.SetParent(parent, false);
+            var image = icon.AddComponent<UnityEngine.UI.Image>();
+            image.sprite = coinSprite;
+            image.preserveAspect = true;
+            image.color = Color.white;
+            var rect = image.rectTransform;
+            rect.anchorMin = new Vector2(0f, 0.5f);
+            rect.anchorMax = rect.anchorMin;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = new Vector2(38f, 38f);
+            image.raycastTarget = false;
+
+            var shineObject = new GameObject("Coin Shine Sweep");
+            shineObject.transform.SetParent(icon.transform, false);
+            var shine = shineObject.AddComponent<UnityEngine.UI.Image>();
+            shine.color = new Color(1f, 1f, 1f, 0.38f);
+            shine.raycastTarget = false;
+            var shineRect = shine.rectTransform;
+            shineRect.anchorMin = new Vector2(0.5f, 0.5f);
+            shineRect.anchorMax = shineRect.anchorMin;
+            shineRect.pivot = new Vector2(0.5f, 0.5f);
+            shineRect.anchoredPosition = new Vector2(-42f, 0f);
+            shineRect.sizeDelta = new Vector2(8f, 46f);
+            shineRect.localRotation = Quaternion.Euler(0f, 0f, -22f);
+
+            var animator = icon.AddComponent<UI.HudIconAnimator>();
+            var serializedAnimator = new SerializedObject(animator);
+            serializedAnimator.FindProperty("icon").objectReferenceValue = rect;
+            serializedAnimator.FindProperty("shine").objectReferenceValue = shine;
+            serializedAnimator.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void CreateGemIcon(Transform parent, Vector2 anchoredPosition, Sprite gemSprite)
+        {
+            var icon = new GameObject("Gem Icon");
+            icon.transform.SetParent(parent, false);
+            var image = icon.AddComponent<UnityEngine.UI.Image>();
+            image.sprite = gemSprite;
+            image.preserveAspect = true;
+            image.color = Color.white;
+            var rect = image.rectTransform;
+            rect.anchorMin = new Vector2(0f, 0.5f);
+            rect.anchorMax = rect.anchorMin;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = new Vector2(36f, 36f);
+            image.raycastTarget = false;
+
+            var animator = icon.AddComponent<UI.HudIconAnimator>();
+            var serializedAnimator = new SerializedObject(animator);
+            serializedAnimator.FindProperty("icon").objectReferenceValue = rect;
+            serializedAnimator.FindProperty("rotationDegrees").floatValue = 3f;
+            serializedAnimator.FindProperty("pulseAmount").floatValue = 0.045f;
+            serializedAnimator.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void CreateMobileTouchControls(Transform parent, Gameplay.SwipeInput input)
