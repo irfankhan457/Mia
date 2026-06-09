@@ -39,7 +39,7 @@ namespace MiaFantasyRun.UI
             }
             else if (powerUp != null && powerUp.HasShield)
             {
-                statusText.text = $"Shield {Mathf.CeilToInt(powerUp.RemainingShieldSeconds)}s";
+                statusText.text = "";
             }
             else
             {
