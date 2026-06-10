@@ -13,6 +13,7 @@ namespace MiaFantasyRun.UI
         [SerializeField] private Text gemsText;
         [SerializeField] private Text distanceText;
         [SerializeField] private Text statusText;
+        [SerializeField] private GameObject gameOverPanel;
 
         private void Start()
         {
@@ -35,7 +36,7 @@ namespace MiaFantasyRun.UI
 
             if (manager.IsGameOver)
             {
-                statusText.text = "Game Over";
+                statusText.text = "";
             }
             else if (powerUp != null && powerUp.HasShield)
             {
@@ -44,6 +45,11 @@ namespace MiaFantasyRun.UI
             else
             {
                 statusText.text = "";
+            }
+
+            if (gameOverPanel != null)
+            {
+                gameOverPanel.SetActive(manager.IsGameOver);
             }
         }
     }

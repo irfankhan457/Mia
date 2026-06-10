@@ -16,6 +16,7 @@ namespace MiaFantasyRun.Editor
         private const string MagicShieldSpritePath = "Assets/_MiaFantasyRun/Art/Pickups/magic-shield.png";
         private const string CoinUiSpritePath = "Assets/_MiaFantasyRun/Art/UI/coin-ui.png";
         private const string GemUiSpritePath = "Assets/_MiaFantasyRun/Art/UI/gem-ui.png";
+        private const string GameOverBackgroundPath = "Assets/_MiaFantasyRun/Art/UI/game-over-background-landscape.png";
 
         [MenuItem("Mia Fantasy Run/Create Starter Scene")]
         public static void CreateStarterScene()
@@ -190,6 +191,7 @@ namespace MiaFantasyRun.Editor
             EnsureSpriteAsset(MagicShieldSpritePath, 560f);
             EnsureSpriteAsset(CoinUiSpritePath, 128f);
             EnsureSpriteAsset(GemUiSpritePath, 128f);
+            EnsureSpriteAsset(GameOverBackgroundPath, 720f);
             CreateStarterScene();
             CreateMainMenuScene();
             CreateSplashScene();
@@ -516,6 +518,7 @@ namespace MiaFantasyRun.Editor
             var gems = CreateHudText(gemRow.transform, "Gems", new Vector2(42f, 0f), TextAnchor.MiddleLeft);
             var distance = CreateHudText(canvasObject.transform, "Distance", new Vector2(-52f, -43f), TextAnchor.UpperRight);
             var status = CreateHudText(canvasObject.transform, "Status", new Vector2(0f, 104f), TextAnchor.LowerCenter);
+            var gameOverPanel = CreateGameOverOverlay(canvasObject.transform, runnerGameManager);
 
             var hud = canvasObject.AddComponent<UI.PrototypeHud>();
             var serializedHud = new SerializedObject(hud);
@@ -526,6 +529,7 @@ namespace MiaFantasyRun.Editor
             serializedHud.FindProperty("gemsText").objectReferenceValue = gems;
             serializedHud.FindProperty("distanceText").objectReferenceValue = distance;
             serializedHud.FindProperty("statusText").objectReferenceValue = status;
+            serializedHud.FindProperty("gameOverPanel").objectReferenceValue = gameOverPanel;
             serializedHud.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -618,6 +622,84 @@ namespace MiaFantasyRun.Editor
             var shadow = frame.gameObject.AddComponent<UnityEngine.UI.Shadow>();
             shadow.effectColor = new Color(0f, 0f, 0f, 0.28f);
             shadow.effectDistance = new Vector2(0f, -5f);
+        }
+
+        private static GameObject CreateGameOverOverlay(Transform parent, Gameplay.RunnerGameManager runnerGameManager)
+        {
+            var panel = new GameObject("Game Over Overlay");
+            panel.transform.SetParent(parent, false);
+            var rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            var backgroundObject = new GameObject("Game Over Artwork");
+            backgroundObject.transform.SetParent(panel.transform, false);
+            var background = backgroundObject.AddComponent<UnityEngine.UI.Image>();
+            background.sprite = EnsureSpriteAsset(GameOverBackgroundPath, 720f);
+            background.color = Color.white;
+            background.preserveAspect = false;
+            background.raycastTarget = true;
+            backgroundObject.AddComponent<MiaFantasyRun.UI.AspectFillImage>();
+            var backgroundRect = background.rectTransform;
+            backgroundRect.anchorMin = new Vector2(0.5f, 0.5f);
+            backgroundRect.anchorMax = new Vector2(0.5f, 0.5f);
+            backgroundRect.pivot = new Vector2(0.5f, 0.5f);
+            backgroundRect.anchoredPosition = Vector2.zero;
+
+            var vignette = CreatePanel(panel.transform, "Game Over Vignette", new Color(0f, 0f, 0f, 0.18f), Vector2.zero, Vector2.zero, Vector2.one);
+            vignette.raycastTarget = false;
+
+            var title = CreateSplashText(panel.transform, "Game Over Title", "GAME OVER", 76, new Vector2(0f, 390f), TextAnchor.MiddleCenter);
+            title.fontStyle = FontStyle.Bold;
+            title.color = new Color(1f, 0.9f, 0.72f);
+            title.rectTransform.sizeDelta = new Vector2(760f, 96f);
+            AddTextShadow(title, new Color(0.22f, 0.08f, 0.02f, 0.88f), new Vector2(0f, -5f));
+            var titleOutline = title.gameObject.AddComponent<UnityEngine.UI.Outline>();
+            titleOutline.effectColor = new Color(0.32f, 0.12f, 0.04f, 0.9f);
+            titleOutline.effectDistance = new Vector2(3f, -3f);
+
+            var tryAgain = CreateGameOverButton(panel.transform, runnerGameManager);
+            tryAgain.transform.SetAsLastSibling();
+            panel.SetActive(false);
+            panel.transform.SetAsFirstSibling();
+            return panel;
+        }
+
+        private static UnityEngine.UI.Button CreateGameOverButton(Transform parent, Gameplay.RunnerGameManager runnerGameManager)
+        {
+            var buttonObject = new GameObject("Try Again Button");
+            buttonObject.transform.SetParent(parent, false);
+            var image = buttonObject.AddComponent<UnityEngine.UI.Image>();
+            image.color = new Color(1f, 0.58f, 0.18f, 0.94f);
+            var button = buttonObject.AddComponent<UnityEngine.UI.Button>();
+            button.onClick.AddListener(runnerGameManager.Restart);
+
+            var rect = image.rectTransform;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = rect.anchorMin;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, 300f);
+            rect.sizeDelta = new Vector2(320f, 72f);
+
+            var outline = buttonObject.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = new Color(1f, 1f, 1f, 0.28f);
+            outline.effectDistance = new Vector2(2f, -2f);
+            var shadow = buttonObject.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.35f);
+            shadow.effectDistance = new Vector2(0f, -5f);
+
+            var label = CreateSplashText(buttonObject.transform, "Label", "TRY AGAIN?", 34, Vector2.zero, TextAnchor.MiddleCenter);
+            label.fontStyle = FontStyle.Bold;
+            label.color = Color.white;
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = Vector2.zero;
+            label.rectTransform.offsetMax = Vector2.zero;
+            AddTextShadow(label, new Color(0f, 0f, 0f, 0.45f), new Vector2(0f, -2f));
+
+            return button;
         }
 
         private static void CreateCoinIcon(Transform parent, Vector2 anchoredPosition, Sprite coinSprite)
